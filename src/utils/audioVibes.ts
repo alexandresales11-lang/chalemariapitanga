@@ -1,72 +1,137 @@
-// Real audio playback engine with Web Audio fallback
+import { CHALET_AUDIO_DATA_URI } from './audioTrack';
+
+type AudioListener = (isPlaying: boolean) => void;
 
 class SoundscapeEngine {
   private audioElement: HTMLAudioElement | null = null;
-  private isPlaying = false;
-  private audioSrc = '/audio/ambiente.mp3';
+  private isCurrentlyPlaying = false;
+  private listeners: Set<AudioListener> = new Set();
+  private audioSrc: string = CHALET_AUDIO_DATA_URI;
 
-  public setAudioSource(url: string) {
-    this.audioSrc = url;
-    if (this.audioElement) {
-      this.audioElement.src = url;
-    }
+  constructor() {
+    // Lazy initialized on first user gesture to comply with browser autoplay policy
   }
 
-  public toggleSound(_mode?: string): boolean {
-    if (this.isPlaying) {
-      this.stop();
-      return false;
+  public subscribe(listener: AudioListener): () => void {
+    this.listeners.add(listener);
+    // Emit current state immediately to the new listener
+    listener(this.isSoundPlaying());
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notifyListeners(state: boolean) {
+    this.isCurrentlyPlaying = state;
+    this.listeners.forEach((listener) => {
+      try {
+        listener(state);
+      } catch (err) {
+        console.error('Error in audio listener:', err);
+      }
+    });
+  }
+
+  private getOrCreateAudio(): HTMLAudioElement {
+    if (!this.audioElement) {
+      const audio = new Audio();
+      audio.src = this.audioSrc;
+      audio.loop = true;
+      audio.volume = 0.65;
+      audio.preload = 'auto';
+
+      // Mobile safari and chrome video/audio attributes
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('webkit-playsinline', 'true');
+
+      audio.addEventListener('playing', () => {
+        this.notifyListeners(true);
+      });
+
+      audio.addEventListener('pause', () => {
+        this.notifyListeners(false);
+      });
+
+      audio.addEventListener('ended', () => {
+        this.notifyListeners(false);
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.warn('Audio playback error:', e);
+        this.notifyListeners(false);
+      });
+
+      this.audioElement = audio;
     }
-    this.start();
-    return true;
+    return this.audioElement;
   }
 
   public isSoundPlaying(): boolean {
-    return this.isPlaying;
+    if (this.audioElement) {
+      return !this.audioElement.paused && !this.audioElement.ended && this.audioElement.currentTime > 0;
+    }
+    return this.isCurrentlyPlaying;
   }
 
-  public start() {
+  public async play(): Promise<boolean> {
     try {
-      if (!this.audioElement) {
-        this.audioElement = new Audio();
-        this.audioElement.src = this.audioSrc;
-        this.audioElement.loop = true;
-        this.audioElement.volume = 0.45;
-
-        this.audioElement.addEventListener('ended', () => {
-          this.isPlaying = false;
-        });
-
-        this.audioElement.addEventListener('error', () => {
-          // If the audio URL fails or requires permission, degrade gracefully
-          this.isPlaying = false;
-        });
-      }
-
-      this.audioElement.play().then(() => {
-        this.isPlaying = true;
-      }).catch(() => {
-        // Autoplay policy or load error
-        this.isPlaying = false;
-      });
-      this.isPlaying = true;
-    } catch {
-      this.isPlaying = false;
+      const audio = this.getOrCreateAudio();
+      audio.muted = false;
+      
+      await audio.play();
+      this.notifyListeners(true);
+      return true;
+    } catch (err) {
+      console.warn('Playback could not start:', err);
+      this.notifyListeners(false);
+      return false;
     }
   }
 
-  public stop() {
+  public pause(): void {
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+      } catch (e) {
+        console.warn('Pause error:', e);
+      }
+    }
+    this.notifyListeners(false);
+  }
+
+  public stop(): void {
     if (this.audioElement) {
       try {
         this.audioElement.pause();
         this.audioElement.currentTime = 0;
-      } catch {
-        // ignore
+      } catch (e) {
+        console.warn('Stop error:', e);
       }
     }
-    this.isPlaying = false;
+    this.notifyListeners(false);
+  }
+
+  public toggleSound(_mode?: string): boolean {
+    if (this.isSoundPlaying()) {
+      this.pause();
+      return false;
+    } else {
+      this.play();
+      return true;
+    }
+  }
+
+  public setAudioSource(url: string): void {
+    this.audioSrc = url;
+    if (this.audioElement) {
+      const wasPlaying = this.isSoundPlaying();
+      this.audioElement.src = url;
+      this.audioElement.load();
+      if (wasPlaying) {
+        this.play();
+      }
+    }
   }
 }
 
 export const soundscape = new SoundscapeEngine();
-

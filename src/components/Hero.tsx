@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CHALET_INFO, CHALET_PHOTOS } from '../data/chaletData';
 import { ChaletPhoto } from '../types';
 import { LightboxModal } from './LightboxModal';
@@ -35,6 +35,13 @@ export const Hero: React.FC<HeroProps> = ({
   onExploreGallery,
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = soundscape.subscribe((playing) => {
+      setIsPlayingAudio(playing);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Synchronized booking state & pricing engine
   const {
@@ -97,8 +104,7 @@ export const Hero: React.FC<HeroProps> = ({
   };
 
   const toggleSoundscape = () => {
-    const nextState = soundscape.toggleSound('summer-day');
-    setIsPlayingAudio(nextState);
+    soundscape.toggleSound('summer-day');
   };
 
   const handleQuickWhatsApp = () => {
