@@ -7,7 +7,7 @@ export const CHALET_INFO = {
   location: "Itaitú, Jacobina - Bahia, Brasil",
   instagram: "chalemariapitangaitaitu",
   instagramUrl: "https://www.instagram.com/chalemariapitangaitaitu",
-  whatsapp: "74988359752",
+  whatsapp: "5574988359752",
   whatsappFormatted: "+55 (74) 98835-9752",
   whatsappLink: "https://wa.me/5574988359752?text=Ol%C3%A1%20Haylla!%20Vim%20pelo%20site%20e%20gostaria%20de%20consultar%20a%20disponibilidade%20do%20Chal%C3%A9%20Maria%20Pitanga.",
   host: {
