@@ -9,6 +9,37 @@
   h1, h2, h3, h4, .font-serif {
     font-family: 'Outfit', 'Playfair Display', Georgia, serif;
   }
+
+  /* Prevent inputs and date pickers from overflowing on mobile Safari / WebKit */
+  input, select, textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: block;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    min-height: 1.2em;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.8);
+    opacity: 0.8;
+  }
 }
 
 /* Hide scrollbar for clean horizontal scrolls */
