@@ -1,0 +1,6 @@
+{
+  "name": "Chalé Maria Pitanga - Itaitú Jacobina",
+  "description": "Site oficial de alta conversão do Chalé Maria Pitanga em Itaitú, Jacobina - Bahia. Cabana A-frame privativa com piscina, área gourmet, ar industrial e capacidade para até 12 hóspedes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
